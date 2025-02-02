@@ -24,6 +24,7 @@
         <canvas id="main" style="position:absolute"></canvas>
 		<div id="stats" style="background-color: rgba(255, 250, 250, 0.9); color:slategray; z-index: 9999999; position:absolute; border-radius: 5px; right: 5px; display: none">
                 <ul style="padding: 0px; list-style-type: none; margin: 3px 5px;">
+                    <li><code><span >Size: </span><span id="size"></span></code></li>
                     <li><code><span >Length: </span><span id="numberOfVisited"></span></code></li>
                     <li><code><span >FPS: </span><span id="fps"></span></code></li>
                 </ul>
@@ -39,7 +40,12 @@
                 <ul>
                     <li><code>S</code> = show stats</li>
                 </ul>
-                <h4>Animation:</h4>
+                <h4>Maze</h4>
+                <ul>
+                    <li><code>K</code> = increase cell size</li>
+                    <li><code>L</code> = decrease cell size</li>
+                </ul>
+                <h4>Animation</h4>
                 <ul>
                     <li><code>A</code> = toggle animation</li>
                     <li><code>{</code> (Left bracket) = increase trail time animation</li>

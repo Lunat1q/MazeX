@@ -12,6 +12,12 @@ Small demo of maze animation in JS
 ### Color
 WIP
 
+### Maze Properties
+
+- `K` = increase cell size
+- `L` = decrease cell size
+
+
 ### Animation:
 
 - `A` = toggle animation
