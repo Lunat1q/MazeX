@@ -17,3 +17,7 @@ WIP
 - `A` = toggle animation
 - `{ (Left bracket)` = increase trail time animation
 - `} (Right bracket)` = decrease trail time animation
+- `O` = increase trail length
+- `P` = decrease trail length
+- `+` = increase generation speed
+- `-` = decrease generation speed

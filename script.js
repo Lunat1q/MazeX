@@ -21,10 +21,11 @@ let fpsFilterStrength = 20;
 let frameTime = 0;
 let lastLoop;
 let thisLoop;
-let trailIntensity = 0.1;
+let trailIntensity = 0.07;
 let intervalId;
 let isMobileRes = false;
 let updateStats = false;
+let baseSpeed = 1;
 
 function init() {
     canvas = document.getElementById('main');
@@ -204,7 +205,7 @@ function toggleStatsWindow() {
         lastLoop = new Date;
         thisLoop = null;
         frameTime = 0;
-        refreshPointsStat();
+        refreshLengthStat();
     } else {
         x.style.display = "none";
         updateStats = false;
@@ -239,6 +240,22 @@ function decreaseTrail() {
     }
 }
 
+function increaseTrailLength() {
+    trailLengthBase *= 1.1;
+}
+
+function decreaseTrailLength() {
+    trailLengthBase /= 1.1;
+}
+
+function increaseSpeed() {
+    baseSpeed *= 1.1;
+}
+
+function decreaseSpeed() {
+    baseSpeed *= 1 / 1.1;
+}
+
 function keyPressHandler(e) {
 
     switch (e.code) {
@@ -254,6 +271,17 @@ function keyPressHandler(e) {
         case 'BracketLeft':
             increaseTrail();
             break;
+        case 'Equal':
+            increaseSpeed();
+            break;
+        case 'Minus':
+            decreaseSpeed();
+        case 'KeyO':
+            increaseTrailLength();
+            break;
+        case 'KeyP':
+            decreaseTrailLength();
+            break;
         default:
             break;
     }
@@ -265,8 +293,13 @@ function keyPressHandler(e) {
 let cells = [];
 const cellSize = 10;
 let prevCellTime = 0;
-let mazeCellsPerSecond = 5;
+let mazeCellsPerSecond = 15;
 let path;
+let lengthElement;
+let visitedCount = 0;
+let trailLengthBase = 1;
+let defaultTrailTime = 10000;
+const bordereWidth = 2;
 
 function initField()
 {
@@ -286,7 +319,8 @@ function initField()
                 right: true,
                 bottom: true,
                 left: true,
-                visited: false
+                visited: false,
+                visitTime: 0
             }
             newColumn.push(cell);
         }
@@ -294,6 +328,8 @@ function initField()
     }
     var midCell = cells[Math.floor(cellsX / 2)][Math.floor(cellsY / 2)];
     midCell.visited = true;
+    visitedCount = 1;
+    midCell.visitTime = new Date;
     path.push(midCell);
 }
 
@@ -306,15 +342,18 @@ function logic()
 function stepMaze()
 {
     var now = new Date;
-    if (now - prevCellTime > 1000 / mazeCellsPerSecond)
+    if (now - prevCellTime > 1000 / (mazeCellsPerSecond * baseSpeed))
     {
         prevCellTime = now;
         var lastCell = path.at(-1);
 
         var nearbyNotVisited = getNonVisitedAroundCell(lastCell);
-
+        lastCell.active = false;
         if (nearbyNotVisited.length == 0)
         {
+            lastCell = path.at(-2)
+            lastCell.visitTime = new Date;
+            lastCell.active = true;
             path.pop();
             return;
         }
@@ -322,6 +361,9 @@ function stepMaze()
         let nextMove = nearbyNotVisited[Math.floor(Math.random() * nearbyNotVisited.length)];
         path.push(nextMove);
         nextMove.visited = true;
+        nextMove.visitTime = new Date;
+        nextMove.active = true;
+        visitedCount++;
         switch (nextMove.from)
         {
             case "l": // Coming from the left
@@ -344,6 +386,17 @@ function stepMaze()
                 lastCell.top = false;
                 break;
         }
+        refreshLengthStat();
+    }
+}
+
+function refreshLengthStat() {
+    if (!lengthElement)
+    {
+        lengthElement = document.getElementById("numberOfVisited");
+    }
+    if (updateStats) {
+        lengthElement.innerText = visitedCount;
     }
 }
 
@@ -390,13 +443,14 @@ function getNonVisitedAroundCell(cell)
 
 function drawField()
 {
+    var now = new Date;
     for (var i = 0; i < cells.length; i++)
     {
         var column = cells[i];
         for(var j = 0; j < column.length; j++)
         {
             var cell = column[j];
-            if (cell.visited)
+            if (cell.visited && (now - cell.visitTime) < defaultTrailTime * trailLengthBase)
             {
                 drawCell(cell);
             }
@@ -412,28 +466,37 @@ function drawCell(cell)
     //context.strokeRect(cell.x * 10, cell.y * 10, cellSize, cellSize);
 
     context.strokeStyle = 'green';
-    context.lineWidth = 2;
-    context.beginPath();
+    context.lineWidth = bordereWidth;
     let x = cell.x * cellSize;
     let y = cell.y * cellSize;
-    if (cell.top) {
-        context.moveTo(x, y);
-        context.lineTo(x + cellSize, y);
-    }
 
-    if (cell.right) {
-        context.moveTo(x + cellSize, y);
-        context.lineTo(x + cellSize, y + cellSize);
+    if (cell.active)
+    {
+        context.fillStyle = "#1F51FF";
+        context.fillRect(x, y, cellSize, cellSize);
     }
+    else
+    {
+        context.beginPath();
+        if (cell.top) {
+            context.moveTo(x, y);
+            context.lineTo(x + cellSize, y);
+        }
 
-    if (cell.bottom) {
-        context.moveTo(x + cellSize, y + cellSize);
-        context.lineTo(x, y + cellSize);
-    }
+        if (cell.right) {
+            context.moveTo(x + cellSize, y);
+            context.lineTo(x + cellSize, y + cellSize);
+        }
 
-    if (cell.left) {
-        context.moveTo(x, y + cellSize);
-        context.lineTo(x, y);
+        if (cell.bottom) {
+            context.moveTo(x + cellSize, y + cellSize);
+            context.lineTo(x, y + cellSize);
+        }
+
+        if (cell.left) {
+            context.moveTo(x, y + cellSize);
+            context.lineTo(x, y);
+        }
     }
 
     context.stroke();
