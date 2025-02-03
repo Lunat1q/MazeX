@@ -325,6 +325,7 @@ let prevCellTime = 0;
 let mazeCellsPerSecond = 15;
 let path;
 let lengthElement;
+let progressElement;
 let visitedCount = 0;
 let trailLengthBase = 1;
 let defaultTrailTime = 10000;
@@ -605,8 +606,13 @@ function refreshLengthStat() {
     if (!lengthElement) {
         lengthElement = document.getElementById("numberOfVisited");
     }
+    if (!progressElement)
+    {
+        progressElement = document.getElementById("genProgress");
+    }
     if (updateStats) {
         lengthElement.innerText = visitedCount;
+        progressElement.innerText = (visitedCount / totalCells).toLocaleString(undefined,{style: 'percent', minimumFractionDigits:1});
     }
 }
 
