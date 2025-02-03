@@ -606,13 +606,12 @@ function refreshLengthStat() {
     if (!lengthElement) {
         lengthElement = document.getElementById("numberOfVisited");
     }
-    if (!progressElement)
-    {
+    if (!progressElement) {
         progressElement = document.getElementById("genProgress");
     }
     if (updateStats) {
         lengthElement.innerText = visitedCount;
-        progressElement.innerText = (visitedCount / totalCells).toLocaleString(undefined,{style: 'percent', minimumFractionDigits:1});
+        progressElement.innerText = (visitedCount / totalCells).toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 1 });
     }
 }
 
@@ -660,7 +659,10 @@ function getMinimalDistanceStepFromCell(cell) {
 
 function getNonVisitedAroundCell(cell) {
     let ret = [];
-    let offsets = [["l", 1, 0], ["r", -1, 0], ["t", 0, 1], ["b", 0, -1]];
+    let offsets = [
+        ["l", 1, 0], ["r", -1, 0],
+        ["t", 0, 1], ["b", 0, -1]
+    ];
 
     for (let i = 0; i < offsets.length; i++) {
         let offset = offsets[i];
@@ -678,15 +680,37 @@ function getNonVisitedAroundCell(cell) {
 }
 
 function drawField() {
-    var now = new Date;
+    let now = new Date;
+    let activeCells = [];
+    // ** Set Neon Glow Effect **
+    context.strokeStyle = 'lime'; // Neon Green
+    context.shadowColor = 'limegreen';
+    if (glow) {
+        context.shadowBlur = cellSize * 0.3; // Glow Intensity
+    }
+    context.lineWidth = Math.max(2, cellSize * 0.1); // Adaptive border width
+    context.beginPath();
     for (var i = 0; i < cellsX; i++) {
         var column = cells[i];
         for (var j = 0; j < cellsY; j++) {
             var cell = column[j];
             if ((cell.visited || cell.visitedSolving) && (now - cell.visitTime) < defaultTrailTime * trailLengthBase) {
-                drawCell(cell);
+                if (cell.active) {
+                    activeCells.push(cell);
+                }
+                else {
+                    drawCell(cell);
+                }
             }
         }
+    }
+    context.stroke();
+    // ** Reset Shadow to Avoid Affecting Other Drawings **
+    context.shadowBlur = 0;
+
+    for(let i = 0; i < activeCells.length; i++)
+    {
+        drawActiveCell(activeCells[i]);
     }
 
     if (mazeSolved) {
@@ -697,6 +721,46 @@ function drawField() {
 
     if (solveMode) {
         drawFinishCell();
+    }
+}
+
+function drawActiveCell(cell)
+{
+    let x = cell.x * cellSize;
+    let y = cell.y * cellSize;
+
+    // ** Draw Active Cell with Blue Highlight **
+    if (cell.active) {
+        context.fillStyle = "#1F51FF"; // Bright Blue
+        context.shadowBlur = 0; // No glow for fill
+        context.fillRect(x, y, cellSize, cellSize);
+        return;
+    }
+}
+
+function drawCell(cell) {
+    let x = cell.x * cellSize;
+    let y = cell.y * cellSize;
+
+    // ** Draw Glowing Borders **
+    if (cell.top) {
+        context.moveTo(x, y);
+        context.lineTo(x + cellSize, y);
+    }
+
+    if (cell.right) {
+        context.moveTo(x + cellSize, y);
+        context.lineTo(x + cellSize, y + cellSize);
+    }
+
+    if (cell.bottom) {
+        context.moveTo(x + cellSize, y + cellSize);
+        context.lineTo(x, y + cellSize);
+    }
+
+    if (cell.left) {
+        context.moveTo(x, y + cellSize);
+        context.lineTo(x, y);
     }
 }
 
@@ -721,52 +785,4 @@ function drawPath() {
     }
 
     context.stroke();
-}
-
-function drawCell(cell) {
-    let x = cell.x * cellSize;
-    let y = cell.y * cellSize;
-
-    // ** Set Neon Glow Effect **
-    context.strokeStyle = 'lime'; // Neon Green
-    context.shadowColor = 'limegreen';
-    if (glow) {
-        context.shadowBlur = cellSize * 0.3; // Glow Intensity
-    }
-    context.lineWidth = Math.max(2, cellSize * 0.1); // Adaptive border width
-
-    // ** Draw Active Cell with Blue Highlight **
-    if (cell.active) {
-        context.fillStyle = "#1F51FF"; // Bright Blue
-        context.shadowBlur = 0; // No glow for fill
-        context.fillRect(x, y, cellSize, cellSize);
-        return;
-    }
-
-    // ** Draw Glowing Borders **
-    context.beginPath();
-    if (cell.top) {
-        context.moveTo(x, y);
-        context.lineTo(x + cellSize, y);
-    }
-
-    if (cell.right) {
-        context.moveTo(x + cellSize, y);
-        context.lineTo(x + cellSize, y + cellSize);
-    }
-
-    if (cell.bottom) {
-        context.moveTo(x + cellSize, y + cellSize);
-        context.lineTo(x, y + cellSize);
-    }
-
-    if (cell.left) {
-        context.moveTo(x, y + cellSize);
-        context.lineTo(x, y);
-    }
-
-    context.stroke();
-
-    // ** Reset Shadow to Avoid Affecting Other Drawings **
-    context.shadowBlur = 0;
 }
