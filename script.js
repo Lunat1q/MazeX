@@ -216,6 +216,10 @@ function toggleAnimation() {
     animate = !animate;
 }
 
+function toggleGlow() {
+    glow = !glow;
+}
+
 function increaseSpeed() {
     baseSpeed *= 1.1;
     adjustSpeed(1.1);
@@ -304,6 +308,9 @@ function keyPressHandler(e) {
         case 'KeyL':
             decreaseCellSize();
             break;
+        case 'KeyG':
+            toggleGlow();
+            break;
         default:
             break;
     }
@@ -329,6 +336,7 @@ let totalCells;
 let firstCell;
 let finishCell;
 let mazeSolved = false;
+let glow = true;
 
 function initField() {
     cells = [];
@@ -710,37 +718,49 @@ function drawPath() {
 }
 
 function drawCell(cell) {
-    context.strokeStyle = 'green';
-    context.lineWidth = bordereWidth;
     let x = cell.x * cellSize;
     let y = cell.y * cellSize;
 
-    if (cell.active) {
-        context.fillStyle = "#1F51FF";
-        context.fillRect(x, y, cellSize, cellSize);
+    // ** Set Neon Glow Effect **
+    context.strokeStyle = 'lime'; // Neon Green
+    context.shadowColor = 'limegreen';
+    if (glow) {
+        context.shadowBlur = cellSize * 0.3; // Glow Intensity
     }
-    else {
-        context.beginPath();
-        if (cell.top) {
-            context.moveTo(x, y);
-            context.lineTo(x + cellSize, y);
-        }
+    context.lineWidth = Math.max(2, cellSize * 0.1); // Adaptive border width
 
-        if (cell.right) {
-            context.moveTo(x + cellSize, y);
-            context.lineTo(x + cellSize, y + cellSize);
-        }
+    // ** Draw Active Cell with Blue Highlight **
+    if (cell.active) {
+        context.fillStyle = "#1F51FF"; // Bright Blue
+        context.shadowBlur = 0; // No glow for fill
+        context.fillRect(x, y, cellSize, cellSize);
+        return;
+    }
 
-        if (cell.bottom) {
-            context.moveTo(x + cellSize, y + cellSize);
-            context.lineTo(x, y + cellSize);
-        }
+    // ** Draw Glowing Borders **
+    context.beginPath();
+    if (cell.top) {
+        context.moveTo(x, y);
+        context.lineTo(x + cellSize, y);
+    }
 
-        if (cell.left) {
-            context.moveTo(x, y + cellSize);
-            context.lineTo(x, y);
-        }
+    if (cell.right) {
+        context.moveTo(x + cellSize, y);
+        context.lineTo(x + cellSize, y + cellSize);
+    }
+
+    if (cell.bottom) {
+        context.moveTo(x + cellSize, y + cellSize);
+        context.lineTo(x, y + cellSize);
+    }
+
+    if (cell.left) {
+        context.moveTo(x, y + cellSize);
+        context.lineTo(x, y);
     }
 
     context.stroke();
+
+    // ** Reset Shadow to Avoid Affecting Other Drawings **
+    context.shadowBlur = 0;
 }
