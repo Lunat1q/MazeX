@@ -16,11 +16,10 @@ WIP
 
 - `K` = increase cell size
 - `L` = decrease cell size
-
+- `G` = toggle glow
 
 ### Animation:
 
-- `A` = toggle animation
 - `{ (Left bracket)` = increase trail time animation
 - `} (Right bracket)` = decrease trail time animation
 - `O` = increase trail length
