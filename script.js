@@ -258,8 +258,7 @@ function decreaseSpeed() {
 
 function increaseCellSize() {
     cellSize += 5;
-    if (cellSize > 300)
-    {
+    if (cellSize > 300) {
         cellSize = 300;
     }
     resetMaze();
@@ -267,8 +266,7 @@ function increaseCellSize() {
 
 function decreaseCellSize() {
     cellSize -= 5;
-    if (cellSize < 15)
-    {
+    if (cellSize < 15) {
         cellSize = 15;
     }
     resetMaze();
@@ -327,10 +325,10 @@ const bordereWidth = 2;
 let solveMode = false;
 let cellsX;
 let cellsY;
+let totalCells;
 let firstCell;
 let finishCell;
 let mazeSolved = false;
-let solvedAt;
 
 function initField() {
     cells = [];
@@ -357,6 +355,7 @@ function initField() {
         }
         cells.push(newColumn)
     }
+    totalCells = cellsX * cellsY;
     firstCell = getStartingCell();
     finishCell = firstCell;
     firstCell.distance = 1;
@@ -375,12 +374,10 @@ function getStartingCell() {
 function logic() {
     drawField();
     if (solveMode) {
-        if (!mazeSolved)
-        {
+        if (!mazeSolved) {
             solveMaze();
         }
-        else
-        {
+        else {
             showSolvedPath();
         }
     }
@@ -389,25 +386,20 @@ function logic() {
     }
 }
 
-function showSolvedPath()
-{
+function showSolvedPath() {
     var now = new Date;
-    if (now - solvedAt < 10000)
-    {
-        for (var i = 0; i < path.length; i++)
-        {
+    if (now - solvedAt < 10000) {
+        for (var i = 0; i < path.length; i++) {
             path[i].visitedSolving = true;
             path[i].visitTime = new Date;
         }
     }
-    else
-    {
+    else {
         resetMaze();
     }
 }
 
-function resetMaze()
-{
+function resetMaze() {
     solveMode = false;
     mazeSolved = false;
     firstCell = null;
@@ -416,34 +408,14 @@ function resetMaze()
 }
 
 function solveMaze() {
-    var now = new Date;
-    if (now - prevCellTime > 1000 / (mazeCellsPerSecond * baseSpeed)) {
-        prevCellTime = now;
-        var lastCell = path.at(-1);
-        var possibleMoves = getPossiblePathFromCell(lastCell);
-        lastCell.active = false;
-        if (possibleMoves.length == 0) {
-            lastCell = path.at(-2)
-            if (lastCell) {
-                lastCell.visitTime = new Date;
-                lastCell.active = true;
-            }
-            path.pop();
-            return;
-        }
-
-        let nextMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        path.push(nextMove);
-        nextMove.visitedSolving = true;
-        nextMove.visitTime = new Date;
-        nextMove.active = true;
-
-        if (nextMove == finishCell)
-        {
-            mazeSolved = true;
-            solvedAt = new Date;
-        }
+    var curCell = finishCell;
+    path.push(curCell);
+    while (curCell != firstCell) {
+        var curCell = getMinimalDistanceStepFromCell(curCell);
+        path.push(curCell);
     }
+    mazeSolved = true;
+    solvedAt = new Date;
 }
 
 function drawFinishCell() {
@@ -514,17 +486,16 @@ function drawFinishCell() {
 }
 
 function drawEntraceCell() {
-    if ((new Date - firstCell.visitTime) > defaultTrailTime * trailLengthBase)
-    {
+    if ((new Date - firstCell.visitTime) > defaultTrailTime * trailLengthBase) {
         return;
     }
-    const doorWidth = Math.max(4, cellSize * 0.6);  
-    const doorHeight = Math.max(6, cellSize * 0.8);  
-    const doorX = firstCell.x * cellSize + (cellSize - doorWidth) / 2; 
+    const doorWidth = Math.max(4, cellSize * 0.6);
+    const doorHeight = Math.max(6, cellSize * 0.8);
+    const doorX = firstCell.x * cellSize + (cellSize - doorWidth) / 2;
     const doorY = firstCell.y * cellSize + (cellSize - doorHeight) / 2;
 
     // ** Door Base (Dark Metal) **
-    context.fillStyle = "dimgray"; 
+    context.fillStyle = "dimgray";
     context.fillRect(doorX, doorY, doorWidth, doorHeight);
 
     // ** Door Outline **
@@ -562,23 +533,21 @@ function drawEntraceCell() {
 }
 
 function prepareForSolving() {
+    path = [];
     solveMode = true;
-    path.push(firstCell);
-    firstCell.visitedSolving = true;
-    firstCell.visitTime = new Date;
 }
 
 function stepMaze() {
     var now = new Date;
     if (now - prevCellTime > 1000 / (mazeCellsPerSecond * baseSpeed)) {
         prevCellTime = now;
-        if (path.length == 0) {
+        var lastCell = path.at(-1);
+        lastCell.active = false;
+        if (totalCells == visitedCount) {
             prepareForSolving();
             return;
         }
-        var lastCell = path.at(-1);
         var nearbyNotVisited = getNonVisitedAroundCell(lastCell);
-        lastCell.active = false;
         if (nearbyNotVisited.length == 0) {
             lastCell = path.at(-2)
             if (lastCell) {
@@ -638,78 +607,57 @@ function refreshSize() {
     sizeElement.innerText = "W: " + cellsX + " H: " + cellsY;
 }
 
-function getPossiblePathFromCell(cell) {
-    var ret = [];
+function getMinimalDistanceStepFromCell(cell) {
+    var ret = cell;
     // No right wall in the cell
     if (!cell.right) {
         let rightCell = cells[cell.x + 1][cell.y];
-        if (!rightCell.visitedSolving) {
-            ret.push(rightCell);
+        if (rightCell.distance < ret.distance) {
+            ret = rightCell;
+            return ret;
         }
     }
-
     // No left wall in the cell
     if (!cell.left) {
         let leftCell = cells[cell.x - 1][cell.y];
-        if (!leftCell.visitedSolving) {
-            ret.push(leftCell);
+        if (leftCell.distance < ret.distance) {
+            ret = leftCell;
+            return ret;
         }
     }
-
     // No top wall in the cell
     if (!cell.top) {
         let topCell = cells[cell.x][cell.y - 1];
-        if (!topCell.visitedSolving) {
-            ret.push(topCell);
+        if (topCell.distance < ret.distance) {
+            ret = topCell;
+            return ret;
         }
     }
-
     // No bottom wall in the cell
     if (!cell.bottom) {
         let bottomCell = cells[cell.x][cell.y + 1];
-        if (!bottomCell.visitedSolving) {
-            ret.push(bottomCell);
+        if (bottomCell.distance < ret.distance) {
+            ret = bottomCell;
+            return ret;
         }
     }
-
     return ret;
 }
 
 function getNonVisitedAroundCell(cell) {
-    var ret = [];
-    // Right cell
-    if (cell.x < cellsX - 1) {
-        let rightCell = cells[cell.x + 1][cell.y];
-        if (!rightCell.visited) {
-            rightCell.from = "l";
-            ret.push(rightCell);
-        }
-    }
+    let ret = [];
+    let offsets = [["l", 1, 0], ["r", -1, 0], ["t", 0, 1], ["b", 0, -1]];
 
-    // Left cell
-    if (cell.x > 0) {
-        let leftCell = cells[cell.x - 1][cell.y];
-        if (!leftCell.visited) {
-            leftCell.from = "r";
-            ret.push(leftCell);
-        }
-    }
-
-    // Bottom cell
-    if (cell.y < cellsY - 1) {
-        let bottomCell = cells[cell.x][cell.y + 1];
-        if (!bottomCell.visited) {
-            bottomCell.from = "t";
-            ret.push(bottomCell);
-        }
-    }
-
-    // Top cell
-    if (cell.y > 0) {
-        let topCell = cells[cell.x][cell.y - 1];
-        if (!topCell.visited) {
-            topCell.from = "b";
-            ret.push(topCell);
+    for (let i = 0; i < offsets.length; i++) {
+        let offset = offsets[i];
+        let x = cell.x + offset[1];
+        let y = cell.y + offset[2];
+        if (x >= 0 && x < cellsX && y >= 0 && y < cellsY) {
+            let newCell = cells[x][y];
+            if (!newCell.visited) {
+                newCell.from = offset[0];
+                ret.push(newCell);
+            }
         }
     }
     return ret;
@@ -726,13 +674,15 @@ function drawField() {
             }
         }
     }
+
+    if (mazeSolved) {
+        drawPath();
+    }
+
     drawEntraceCell();
+
     if (solveMode) {
         drawFinishCell();
-    }
-    if (mazeSolved)
-    {
-        drawPath();
     }
 }
 
@@ -755,7 +705,7 @@ function drawPath() {
         let cellY = cell.y * cellSize + cellSize / 2;
         context.lineTo(cellX, cellY);
     }
-    
+
     context.stroke();
 }
 
