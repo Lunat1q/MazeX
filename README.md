@@ -1,4 +1,7 @@
 # MazeX
+
+> **This repository is archived.** MazeX has moved to [Lunat1q/Screensavers](https://github.com/Lunat1q/Screensavers), where it continues as part of that collection.
+
 Small demo of maze animation in JS
 
 ## [Demo](https://lunat1q.github.io/MazeX/)
